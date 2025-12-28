@@ -207,12 +207,12 @@ export function AIConfigDialog() {
                     <SelectItem key={model.id} value={model.id}>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{model.name}</span>
-                        {model.isFree && (
+                        {"isFree" in model && model.isFree && (
                           <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                             무료
                           </Badge>
                         )}
-                        {model.isNew && (
+                        {"isNew" in model && model.isNew && (
                           <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                             NEW
                           </Badge>

@@ -1,5 +1,8 @@
 import { db, DBProject, DBDocument, generateUid, getTimestamp } from "./index";
 
+// Re-export types
+export type { DBProject, DBDocument };
+
 // Project operations
 export async function createProject(data: {
   name: string;

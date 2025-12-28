@@ -39,7 +39,23 @@ interface Step4AIConfigProps {
   onChange: (value: AIConfigData) => void;
 }
 
-const aiProviders = [
+interface AIModel {
+  id: string;
+  name: string;
+  description: string;
+  isFree?: boolean;
+  isNew?: boolean;
+}
+
+interface AIProviderInfo {
+  id: string;
+  name: string;
+  description: string;
+  recommended?: boolean;
+  models: AIModel[];
+}
+
+const aiProviders: AIProviderInfo[] = [
   {
     id: "openai",
     name: "OpenAI",
