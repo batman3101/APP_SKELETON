@@ -6,7 +6,7 @@
 
 ### 1. AI 문서 자동 생성
 - 앱 아이디어 입력 → AI가 기획문서/PRD/TRD/TDD/TODO 자동 생성
-- OpenAI(GPT-4) 및 Claude 지원
+- OpenAI(GPT-4), Claude, Google AI (Gemini) 지원
 - 사용자 수준에 맞춘 문서 상세도 조절
 
 ### 2. 추가 기능 문서 생성
@@ -39,7 +39,7 @@
 | UI 컴포넌트 | shadcn/ui |
 | 상태관리 | Zustand |
 | 로컬 저장 | IndexedDB (Dexie.js) |
-| AI 통합 | OpenAI API, Anthropic Claude API |
+| AI 통합 | OpenAI API, Anthropic Claude API, Google AI (Gemini) API |
 | 드래그앤드롭 | @dnd-kit/core |
 | 차트/타임라인 | Recharts |
 | 웹 크롤링 | Cheerio + Axios |
@@ -118,6 +118,7 @@ src/
 
 - **OpenAI**: [platform.openai.com](https://platform.openai.com/api-keys)에서 발급
 - **Claude**: [console.anthropic.com](https://console.anthropic.com/)에서 발급
+- **Google AI**: [aistudio.google.com](https://aistudio.google.com/app/apikey)에서 발급 (무료 사용 가능)
 
 API 키는 로컬에만 저장되며 외부로 전송되지 않습니다.
 

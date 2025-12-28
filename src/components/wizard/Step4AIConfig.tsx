@@ -40,6 +40,12 @@ const aiProviders = [
     description: "코드 생성에 강력함",
     recommended: false,
   },
+  {
+    id: "google",
+    name: "Google AI (Gemini)",
+    description: "무료 사용 가능, 빠른 응답",
+    recommended: false,
+  },
 ];
 
 const userLevels = [
@@ -127,7 +133,13 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
         <Input
           id="apiKey"
           type="password"
-          placeholder={value.aiProvider === "openai" ? "sk-..." : "sk-ant-..."}
+          placeholder={
+            value.aiProvider === "openai" 
+              ? "sk-..." 
+              : value.aiProvider === "claude" 
+                ? "sk-ant-..." 
+                : "AIza..."
+          }
           value={value.apiKey}
           onChange={(e) => onChange({ ...value, apiKey: e.target.value })}
         />
@@ -135,7 +147,7 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
           <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
           <p>
             API 키는 로컬에만 저장되며 외부로 전송되지 않습니다.
-            {value.aiProvider === "openai" ? (
+            {value.aiProvider === "openai" && (
               <a 
                 href="https://platform.openai.com/api-keys" 
                 target="_blank" 
@@ -144,7 +156,8 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
               >
                 OpenAI에서 발급받기
               </a>
-            ) : (
+            )}
+            {value.aiProvider === "claude" && (
               <a 
                 href="https://console.anthropic.com/" 
                 target="_blank" 
@@ -152,6 +165,16 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
                 className="text-primary hover:underline ml-1"
               >
                 Anthropic에서 발급받기
+              </a>
+            )}
+            {value.aiProvider === "google" && (
+              <a 
+                href="https://aistudio.google.com/app/apikey" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline ml-1"
+              >
+                Google AI Studio에서 발급받기
               </a>
             )}
           </p>

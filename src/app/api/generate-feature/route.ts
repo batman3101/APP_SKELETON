@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +58,20 @@ export async function POST(request: NextRequest) {
         });
         const textBlock = response.content.find((block) => block.type === "text");
         content = textBlock?.type === "text" ? textBlock.text : "";
+      } else if (aiProvider === "google") {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+          model: "gemini-1.5-pro",
+          systemInstruction: systemPrompt,
+        });
+        const result = await model.generateContent({
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          generationConfig: {
+            maxOutputTokens: 3000,
+            temperature: 0.7,
+          },
+        });
+        content = result.response.text();
       }
 
       results[docType] = content;
