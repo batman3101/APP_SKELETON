@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export interface GoogleGenerateParams {
   apiKey: string;
+  model?: string;
   systemPrompt: string;
   userPrompt: string;
   maxTokens?: number;
@@ -14,15 +15,21 @@ export function createGoogleAIClient(apiKey: string) {
 export async function generateDocumentWithGoogle(
   params: GoogleGenerateParams
 ): Promise<string> {
-  const { apiKey, systemPrompt, userPrompt, maxTokens = 4000 } = params;
+  const { 
+    apiKey, 
+    model = "gemini-1.5-flash", 
+    systemPrompt, 
+    userPrompt, 
+    maxTokens = 4000 
+  } = params;
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-pro",
+  const generativeModel = genAI.getGenerativeModel({ 
+    model,
     systemInstruction: systemPrompt,
   });
 
-  const result = await model.generateContent({
+  const result = await generativeModel.generateContent({
     contents: [{ role: "user", parts: [{ text: userPrompt }] }],
     generationConfig: {
       maxOutputTokens: maxTokens,

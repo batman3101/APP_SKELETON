@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,8 @@ import {
   FileText, 
   CheckSquare,
   MoreHorizontal,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,30 +20,91 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getProjects, deleteProject, DBProject } from "@/lib/db/projects";
+import { db } from "@/lib/db";
+import { toast } from "sonner";
 
-// 임시 데이터 - 나중에 IndexedDB에서 가져옴
-const projects = [
-  {
-    id: "1",
-    name: "쇼핑몰 앱",
-    description: "온라인 쇼핑몰 웹앱 프로젝트",
-    createdAt: "2024-12-25",
-    progress: 35,
-    documentCount: 5,
-    todoCount: 12,
-  },
-  {
-    id: "2", 
-    name: "포트폴리오 사이트",
-    description: "개인 포트폴리오 웹사이트",
-    createdAt: "2024-12-20",
-    progress: 80,
-    documentCount: 5,
-    todoCount: 8,
-  },
-];
+interface ProjectWithStats extends DBProject {
+  documentCount: number;
+  todoCount: number;
+}
 
 export default function DashboardPage() {
+  const [projects, setProjects] = useState<ProjectWithStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  async function loadProjects() {
+    try {
+      const allProjects = await getProjects();
+      
+      // 각 프로젝트의 문서 및 TODO 개수 가져오기
+      const projectsWithStats = await Promise.all(
+        allProjects.map(async (project) => {
+          const documents = await db.documents
+            .where("projectUid")
+            .equals(project.uid)
+            .count();
+          const todos = await db.todos
+            .where("projectUid")
+            .equals(project.uid)
+            .count();
+          
+          return {
+            ...project,
+            documentCount: documents,
+            todoCount: todos,
+          };
+        })
+      );
+      
+      setProjects(projectsWithStats);
+    } catch (error) {
+      console.error("Error loading projects:", error);
+      toast.error("프로젝트 목록을 불러오는데 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleDeleteProject(uid: string, name: string) {
+    if (!confirm(`"${name}" 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      await deleteProject(uid);
+      toast.success("프로젝트가 삭제되었습니다.");
+      loadProjects();
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error("프로젝트 삭제에 실패했습니다.");
+    }
+  }
+
+  function formatDate(date: Date): string {
+    return new Date(date).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container py-8">
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">프로젝트를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="container py-8">
       {/* Header */}
@@ -64,7 +127,7 @@ export default function DashboardPage() {
       {projects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Card key={project.id} className="group hover:shadow-lg transition-shadow">
+            <Card key={project.uid} className="group hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -85,17 +148,21 @@ export default function DashboardPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Link href={`/project/${project.id}`} className="w-full">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/project/${project.uid}`} className="w-full cursor-pointer">
                           상세보기
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link href={`/feature-add?project=${project.id}`} className="w-full">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/feature-add?project=${project.uid}`} className="w-full cursor-pointer">
                           기능 추가
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem 
+                        className="text-destructive cursor-pointer"
+                        onClick={() => handleDeleteProject(project.uid, project.name)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
                         삭제
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -132,17 +199,17 @@ export default function DashboardPage() {
                 {/* Date */}
                 <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  <span>{project.createdAt}</span>
+                  <span>{formatDate(project.createdAt)}</span>
                 </div>
 
                 {/* Quick Actions */}
                 <div className="flex gap-2 mt-4">
-                  <Link href={`/project/${project.id}`} className="flex-1">
+                  <Link href={`/project/${project.uid}`} className="flex-1">
                     <Button variant="outline" size="sm" className="w-full">
                       문서 보기
                     </Button>
                   </Link>
-                  <Link href={`/project/${project.id}/todo`} className="flex-1">
+                  <Link href={`/project/${project.uid}/todo`} className="flex-1">
                     <Button variant="outline" size="sm" className="w-full">
                       TODO 관리
                     </Button>

@@ -7,18 +7,21 @@ export type AIProvider = "openai" | "claude" | "google";
 
 export interface AIConfigState {
   aiProvider: AIProvider;
+  aiModel: string;
   apiKey: string;
   isConfigured: boolean;
   setAIProvider: (provider: AIProvider) => void;
+  setAIModel: (model: string) => void;
   setApiKey: (key: string) => void;
-  setConfig: (provider: AIProvider, apiKey: string) => void;
+  setConfig: (provider: AIProvider, model: string, apiKey: string) => void;
   clearConfig: () => void;
 }
 
 export const useAIConfigStore = create<AIConfigState>()(
   persist(
     (set) => ({
-      aiProvider: "openai",
+      aiProvider: "google",
+      aiModel: "gemini-1.5-flash",
       apiKey: "",
       isConfigured: false,
       
@@ -28,22 +31,27 @@ export const useAIConfigStore = create<AIConfigState>()(
           isConfigured: state.apiKey.length > 0,
         })),
       
+      setAIModel: (model) =>
+        set({ aiModel: model }),
+      
       setApiKey: (key) => 
-        set((state) => ({ 
+        set({ 
           apiKey: key,
           isConfigured: key.length > 0,
-        })),
+        }),
       
-      setConfig: (provider, apiKey) =>
+      setConfig: (provider, model, apiKey) =>
         set({
           aiProvider: provider,
+          aiModel: model,
           apiKey: apiKey,
           isConfigured: apiKey.length > 0,
         }),
       
       clearConfig: () =>
         set({
-          aiProvider: "openai",
+          aiProvider: "google",
+          aiModel: "gemini-1.5-flash",
           apiKey: "",
           isConfigured: false,
         }),
@@ -53,6 +61,7 @@ export const useAIConfigStore = create<AIConfigState>()(
       // API 키는 민감 정보이므로 로컬에만 저장
       partialize: (state) => ({
         aiProvider: state.aiProvider,
+        aiModel: state.aiModel,
         apiKey: state.apiKey,
         isConfigured: state.isConfigured,
       }),

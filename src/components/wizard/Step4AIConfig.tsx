@@ -7,6 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Bot,
   Key,
@@ -21,6 +28,7 @@ import { useAIConfigStore } from "@/stores/aiConfigStore";
 
 interface AIConfigData {
   aiProvider: string;
+  aiModel: string;
   apiKey: string;
   userLevel: string;
   documentsToGenerate: string[];
@@ -34,21 +42,36 @@ interface Step4AIConfigProps {
 const aiProviders = [
   {
     id: "openai",
-    name: "OpenAI (GPT-4)",
+    name: "OpenAI",
     description: "가장 널리 사용되는 AI",
-    recommended: true,
+    models: [
+      { id: "gpt-4o", name: "GPT-4o", description: "최신 멀티모달 모델" },
+      { id: "gpt-4o-mini", name: "GPT-4o Mini", description: "빠르고 저렴한 모델" },
+      { id: "gpt-4-turbo", name: "GPT-4 Turbo", description: "강력한 추론 능력" },
+      { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo", description: "경제적인 선택" },
+    ],
   },
   {
     id: "claude",
     name: "Claude (Anthropic)",
     description: "코드 생성에 강력함",
-    recommended: false,
+    models: [
+      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", description: "최고 성능 모델" },
+      { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku", description: "빠른 응답 속도" },
+      { id: "claude-3-opus-20240229", name: "Claude 3 Opus", description: "복잡한 작업에 최적" },
+    ],
   },
   {
     id: "google",
     name: "Google AI (Gemini)",
     description: "무료 사용 가능, 빠른 응답",
-    recommended: false,
+    recommended: true,
+    models: [
+      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", description: "빠른 속도, 무료! (추천)", isFree: true },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", description: "강력한 추론, 무료!", isFree: true },
+      { id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash (실험)", description: "최신 실험 모델, 무료 (quota 제한)", isFree: true, isNew: true },
+      { id: "gemini-1.5-flash-8b", name: "Gemini 1.5 Flash 8B", description: "초고속, 무료!", isFree: true },
+    ],
   },
 ];
 
@@ -79,7 +102,7 @@ const documentTypes = [
 ];
 
 export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
-  const { aiProvider: savedProvider, apiKey: savedApiKey, isConfigured } = useAIConfigStore();
+  const { aiProvider: savedProvider, aiModel: savedModel, apiKey: savedApiKey, isConfigured } = useAIConfigStore();
 
   // 저장된 AI 설정이 있으면 자동으로 불러오기
   useEffect(() => {
@@ -87,10 +110,11 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
       onChange({
         ...value,
         aiProvider: savedProvider,
+        aiModel: savedModel,
         apiKey: savedApiKey,
       });
     }
-  }, [isConfigured, savedProvider, savedApiKey]);
+  }, [isConfigured, savedProvider, savedModel, savedApiKey]);
 
   const handleDocumentToggle = (docId: string) => {
     const current = value.documentsToGenerate;
@@ -98,6 +122,18 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
       ? current.filter((id) => id !== docId)
       : [...current, docId];
     onChange({ ...value, documentsToGenerate: updated });
+  };
+
+  const selectedProviderInfo = aiProviders.find((p) => p.id === value.aiProvider);
+  const availableModels = selectedProviderInfo?.models || [];
+
+  const handleProviderChange = (providerId: string) => {
+    const provider = aiProviders.find((p) => p.id === providerId);
+    onChange({
+      ...value,
+      aiProvider: providerId,
+      aiModel: provider?.models[0]?.id || "",
+    });
   };
 
   return (
@@ -137,13 +173,16 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
                 "cursor-pointer transition-all hover:shadow-md",
                 value.aiProvider === provider.id && "ring-2 ring-primary border-primary"
               )}
-              onClick={() => onChange({ ...value, aiProvider: provider.id })}
+              onClick={() => handleProviderChange(provider.id)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium">{provider.name}</span>
                   {provider.recommended && (
-                    <Badge variant="secondary" className="text-xs">추천</Badge>
+                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      추천
+                    </Badge>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -154,6 +193,46 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
           ))}
         </div>
       </div>
+
+      {/* Model Selection */}
+      {availableModels.length > 0 && (
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            모델 선택
+          </Label>
+          <Select 
+            value={value.aiModel} 
+            onValueChange={(model) => onChange({ ...value, aiModel: model })}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="모델을 선택하세요" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableModels.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{model.name}</span>
+                      {model.isFree && (
+                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                          무료
+                        </Badge>
+                      )}
+                      {model.isNew && (
+                        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                          NEW
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{model.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* API Key */}
       <div className="space-y-2">

@@ -15,6 +15,8 @@ import {
   Step4AIConfig,
   Step5Generate,
 } from "@/components/wizard";
+import { createProject, addDocument } from "@/lib/db/projects";
+import { toast } from "sonner";
 
 const steps = [
   { id: 1, title: "앱 유형", description: "어떤 종류의 앱을 만들고 싶으신가요?" },
@@ -38,6 +40,7 @@ interface WizardData {
   };
   aiConfig: {
     aiProvider: string;
+    aiModel: string;
     apiKey: string;
     userLevel: string;
     documentsToGenerate: string[];
@@ -57,7 +60,8 @@ const initialData: WizardData = {
     referenceApps: "",
   },
   aiConfig: {
-    aiProvider: "openai",
+    aiProvider: "google",
+    aiModel: "gemini-1.5-flash",
     apiKey: "",
     userLevel: "beginner",
     documentsToGenerate: ["planning", "prd", "trd", "tdd", "todo"],
@@ -70,6 +74,7 @@ export default function WizardPage() {
   const [data, setData] = useState<WizardData>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDocuments, setGeneratedDocuments] = useState<string[]>([]);
+  const [projectUid, setProjectUid] = useState<string>("");
 
   const progress = (currentStep / steps.length) * 100;
 
@@ -104,19 +109,90 @@ export default function WizardPage() {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    // TODO: Implement actual API calls
-    // Simulate generation process
-    for (const docId of data.aiConfig.documentsToGenerate) {
-      await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 1000));
-      setGeneratedDocuments((prev) => [...prev, docId]);
+    setGeneratedDocuments([]);
+
+    try {
+      // 1. 프로젝트 생성
+      const uid = await createProject({
+        name: data.idea.name,
+        description: data.idea.shortDescription,
+        appType: data.appType,
+      });
+      setProjectUid(uid);
+
+      // 2. 각 문서 생성 및 저장
+      for (const docType of data.aiConfig.documentsToGenerate) {
+        try {
+          // API 호출하여 문서 생성
+          const response = await fetch("/api/generate-docs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              aiProvider: data.aiConfig.aiProvider,
+              aiModel: data.aiConfig.aiModel,
+              apiKey: data.aiConfig.apiKey,
+              appType: data.appType,
+              appName: data.idea.name,
+              shortDescription: data.idea.shortDescription,
+              detailedDescription: data.idea.detailedDescription,
+              coreFeatures: data.features.coreFeatures,
+              targetUsers: data.features.targetUsers,
+              referenceApps: data.features.referenceApps,
+              userLevel: data.aiConfig.userLevel,
+              documentType: docType,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error(`API Error for ${docType}:`, errorData);
+            throw new Error(`${getDocumentTitle(docType)} 생성 실패: ${errorData.error || 'Unknown error'}`);
+          }
+
+          const result = await response.json();
+
+          // IndexedDB에 저장
+          await addDocument({
+            projectUid: uid,
+            type: docType as any,
+            title: getDocumentTitle(docType),
+            content: result.content,
+          });
+
+          setGeneratedDocuments((prev) => [...prev, docType]);
+        } catch (error) {
+          console.error(`Error generating ${docType}:`, error);
+          toast.error(`${getDocumentTitle(docType)} 생성 실패`);
+        }
+      }
+
+      toast.success("모든 문서가 생성되었습니다!");
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast.error("프로젝트 생성 중 오류가 발생했습니다.");
+    } finally {
+      setIsGenerating(false);
     }
-    setIsGenerating(false);
   };
 
   const handleComplete = () => {
-    // TODO: Save project to IndexedDB and redirect
-    router.push("/dashboard");
+    if (projectUid) {
+      router.push(`/project/${projectUid}`);
+    } else {
+      router.push("/dashboard");
+    }
   };
+
+  function getDocumentTitle(docType: string): string {
+    const titles: Record<string, string> = {
+      planning: "기획문서",
+      prd: "PRD (제품 요구사항 문서)",
+      trd: "TRD (기술 요구사항 문서)",
+      tdd: "TDD 문서",
+      todo: "TODO List",
+    };
+    return titles[docType] || docType;
+  }
 
   const renderStepContent = () => {
     switch (currentStep) {

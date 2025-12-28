@@ -6,8 +6,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("Received request body:", {
+      aiProvider: body.aiProvider,
+      aiModel: body.aiModel,
+      hasApiKey: !!body.apiKey,
+      documentType: body.documentType,
+    });
+
     const {
       aiProvider,
+      aiModel,
       apiKey,
       appType,
       appName,
@@ -21,11 +29,22 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!apiKey) {
+      console.error("API key is missing");
       return NextResponse.json(
         { error: "API 키가 필요합니다" },
         { status: 400 }
       );
     }
+
+    if (!documentType) {
+      console.error("Document type is missing");
+      return NextResponse.json(
+        { error: "문서 타입이 필요합니다" },
+        { status: 400 }
+      );
+    }
+
+    console.log(`Generating ${documentType} document with ${aiProvider} (${aiModel})`);
 
     const systemPrompt = getSystemPrompt(documentType, userLevel);
     const userPrompt = getUserPrompt({
@@ -43,7 +62,7 @@ export async function POST(request: NextRequest) {
     if (aiProvider === "openai") {
       const client = new OpenAI({ apiKey });
       const response = await client.chat.completions.create({
-        model: "gpt-4o",
+        model: aiModel || "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -55,7 +74,7 @@ export async function POST(request: NextRequest) {
     } else if (aiProvider === "claude") {
       const client = new Anthropic({ apiKey });
       const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: aiModel || "claude-3-5-sonnet-20241022",
         max_tokens: 4000,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
@@ -65,7 +84,7 @@ export async function POST(request: NextRequest) {
     } else if (aiProvider === "google") {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-pro",
+        model: aiModel || "gemini-1.5-flash",
         systemInstruction: systemPrompt,
       });
       const result = await model.generateContent({
