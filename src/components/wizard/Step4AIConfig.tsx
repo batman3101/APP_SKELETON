@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,12 @@ import {
   Key,
   FileText,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAIConfigStore } from "@/stores/aiConfigStore";
 
 interface AIConfigData {
   aiProvider: string;
@@ -75,6 +79,19 @@ const documentTypes = [
 ];
 
 export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
+  const { aiProvider: savedProvider, apiKey: savedApiKey, isConfigured } = useAIConfigStore();
+
+  // 저장된 AI 설정이 있으면 자동으로 불러오기
+  useEffect(() => {
+    if (isConfigured && !value.apiKey) {
+      onChange({
+        ...value,
+        aiProvider: savedProvider,
+        apiKey: savedApiKey,
+      });
+    }
+  }, [isConfigured, savedProvider, savedApiKey]);
+
   const handleDocumentToggle = (docId: string) => {
     const current = value.documentsToGenerate;
     const updated = current.includes(docId)
@@ -92,13 +109,27 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
         </p>
       </div>
 
+      {/* 저장된 AI 설정 표시 */}
+      {isConfigured && (
+        <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-medium">AI 설정이 이미 완료되어 있습니다!</span>
+          </div>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+            헤더의 <Settings className="h-3 w-3 inline" /> 설정 버튼에서 저장한 API 키를 사용합니다.
+            아래에서 변경하거나 그대로 사용하세요.
+          </p>
+        </div>
+      )}
+
       {/* AI Provider Selection */}
       <div className="space-y-3">
         <Label className="flex items-center gap-2">
           <Bot className="h-4 w-4" />
           AI 서비스 선택
         </Label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {aiProviders.map((provider) => (
             <Card
               key={provider.id}
@@ -129,6 +160,12 @@ export function Step4AIConfig({ value, onChange }: Step4AIConfigProps) {
         <Label htmlFor="apiKey" className="flex items-center gap-2">
           <Key className="h-4 w-4" />
           API 키
+          {value.apiKey && (
+            <Badge variant="outline" className="text-xs text-green-600">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              입력됨
+            </Badge>
+          )}
         </Label>
         <Input
           id="apiKey"

@@ -11,6 +11,7 @@ import {
 import { Menu, Sparkles, FolderKanban, Palette, BookOpen, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
+import { AIConfigDialog } from "./AIConfigDialog";
 
 const navItems = [
   { href: "/", label: "홈", icon: Home },
@@ -57,7 +58,8 @@ export function Header() {
               </Link>
             );
           })}
-          <div className="ml-2 pl-2 border-l">
+          <div className="ml-2 pl-2 border-l flex items-center gap-2">
+            <AIConfigDialog />
             <ThemeToggle />
           </div>
         </nav>
@@ -98,6 +100,9 @@ export function Header() {
                   </Link>
                 );
               })}
+              <div className="pt-4 mt-4 border-t">
+                <AIConfigDialog />
+              </div>
             </div>
           </SheetContent>
         </Sheet>

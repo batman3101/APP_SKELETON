@@ -10,3 +10,6 @@ export type { Todo, TodoStatus, TodoPriority, TodoCategory } from "./todoStore";
 export { useThemeStore } from "./themeStore";
 export type { ThemeCaptureResult, ColorInfo, TypographyInfo } from "./themeStore";
 
+export { useAIConfigStore } from "./aiConfigStore";
+export type { AIProvider, AIConfigState } from "./aiConfigStore";
+
