@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 바이브 코딩 가이드 웹앱
 
-## Getting Started
+코딩 경험이 전혀 없는 초보자가 바이브 코딩(AI 기반 코딩)을 시작할 수 있도록 돕는 마법사 형태의 웹앱입니다.
 
-First, run the development server:
+## 🌟 주요 기능
+
+### 1. AI 문서 자동 생성
+- 앱 아이디어 입력 → AI가 기획문서/PRD/TRD/TDD/TODO 자동 생성
+- OpenAI(GPT-4) 및 Claude 지원
+- 사용자 수준에 맞춘 문서 상세도 조절
+
+### 2. 추가 기능 문서 생성
+- 기존 프로젝트에 새 기능 추가 시 부분 문서 생성
+- 기존 TODO에 자동 병합
+
+### 3. 인터랙티브 TODO 관리
+- 칸반 보드 (드래그앤드롭)
+- 체크리스트 뷰 + 프로그레스 바
+- 타임라인/간트 차트 뷰
+- AI 진행도 분석
+
+### 4. UI/테마 캡처
+- 스크린샷 업로드 및 AI Vision 분석
+- URL 크롤링으로 CSS 추출
+- 디자인 가이드/Tailwind 설정 생성
+
+### 5. 바이브 코딩 + TDD 가이드
+- Cursor IDE 사용법
+- AI와 대화하는 방법
+- TDD 방법론 가이드
+
+## 🛠 기술 스택
+
+| 영역 | 기술 |
+|------|------|
+| 프레임워크 | Next.js 14+ (App Router) |
+| 언어 | TypeScript |
+| 스타일링 | Tailwind CSS v4 |
+| UI 컴포넌트 | shadcn/ui |
+| 상태관리 | Zustand |
+| 로컬 저장 | IndexedDB (Dexie.js) |
+| AI 통합 | OpenAI API, Anthropic Claude API |
+| 드래그앤드롭 | @dnd-kit/core |
+| 차트/타임라인 | Recharts |
+| 웹 크롤링 | Cheerio + Axios |
+| 마크다운 | react-markdown, remark-gfm |
+
+## 🚀 시작하기
+
+### 설치
+
+```bash
+npm install
+```
+
+### 개발 서버 실행
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 에서 앱을 확인할 수 있습니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 프로덕션 빌드
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## 📁 프로젝트 구조
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── page.tsx                        # 랜딩 페이지
+│   ├── wizard/page.tsx                 # 초기 문서 마법사
+│   ├── feature-add/page.tsx            # 추가 기능 문서 생성
+│   ├── theme-capture/page.tsx          # UI/테마 캡처
+│   ├── dashboard/page.tsx              # 프로젝트 대시보드
+│   ├── project/[id]/
+│   │   ├── page.tsx                    # 프로젝트 상세
+│   │   └── todo/page.tsx               # TODO 관리
+│   ├── guide/
+│   │   ├── page.tsx
+│   │   ├── vibe-coding/page.tsx
+│   │   └── tdd/page.tsx
+│   └── api/
+│       ├── generate-docs/route.ts
+│       ├── generate-feature/route.ts
+│       ├── analyze-progress/route.ts
+│       ├── analyze-screenshot/route.ts
+│       └── crawl-page/route.ts
+│
+├── components/
+│   ├── ui/                             # shadcn/ui
+│   ├── wizard/                         # 마법사 컴포넌트
+│   ├── todo/                           # TODO 관리
+│   └── layout/                         # 레이아웃 컴포넌트
+│
+├── lib/
+│   ├── ai/                             # AI 클라이언트
+│   ├── db/                             # IndexedDB 설정
+│   └── utils/                          # 유틸리티
+│
+├── stores/                             # Zustand 스토어
+│   ├── wizardStore.ts
+│   ├── projectStore.ts
+│   ├── todoStore.ts
+│   └── themeStore.ts
+│
+└── types/                              # TypeScript 타입
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔑 API 키 설정
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+이 앱은 AI 기능을 위해 API 키가 필요합니다:
 
-## Deploy on Vercel
+- **OpenAI**: [platform.openai.com](https://platform.openai.com/api-keys)에서 발급
+- **Claude**: [console.anthropic.com](https://console.anthropic.com/)에서 발급
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+API 키는 로컬에만 저장되며 외부로 전송되지 않습니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 라이센스
+
+MIT License
+
+## 🤝 기여하기
+
+이슈 및 풀 리퀘스트를 환영합니다!
