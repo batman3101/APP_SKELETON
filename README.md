@@ -1,0 +1,2 @@
+# APP_SKELETON
+VIBE CODING 기초 문서 자동 제작 APP
